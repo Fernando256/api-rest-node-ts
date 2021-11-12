@@ -1,5 +1,7 @@
+import {unlink} from 'fs/promises';
 import {Request, Response} from 'express';
 import {Phrase} from '../models/Phrase';
+import sharp from 'sharp';
 import { Sequelize } from 'sequelize';
 
 export const ping = (req: Request, res: Response) => {
@@ -103,5 +105,22 @@ export const RandomPhrase = async (req: Request, res: Response) => {
     }catch(error) {
         console.log("ERRO:", error);
         res.json({error: 'Alguma coisa deu errado!'});
+    }
+}
+
+export const uploadFile = async (req: Request, res: Response) => {
+    if (req.file) {
+        const filename = `${req.file.filename}.jpg`;
+        await sharp(req.file.path)
+            .resize(300, 300)
+            .toFormat('jpeg')
+            .toFile(`./public/media/${filename}`);
+
+        await unlink(req.file.path);//Apaga itens do tmp
+
+        res.json({ image: filename});
+    } else {
+        res.status(400);
+        res.json({error: 'Arquivo inválido.'});
     }
 }
